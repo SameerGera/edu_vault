@@ -3,7 +3,7 @@ import { rateLimit, createSecureResponse } from '@/lib/security';
 
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
-const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/linkedin/callback`;
+const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3000'}/api/linkedin/callback`;
 
 export async function GET(request: Request) {
   // Rate limiting for OAuth initiation

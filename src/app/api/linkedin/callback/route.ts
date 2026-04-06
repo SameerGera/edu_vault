@@ -3,7 +3,7 @@ import { rateLimit, createSecureResponse } from '@/lib/security';
 
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
-const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/linkedin/callback`;
+const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3000'}/api/linkedin/callback`;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -21,12 +21,14 @@ export async function GET(request: Request) {
     );
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3000';
+
   if (error) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/student?error=${error}`);
+    return NextResponse.redirect(`${baseUrl}/student?error=${error}`);
   }
 
   if (!code || !LINKEDIN_CLIENT_ID || !LINKEDIN_CLIENT_SECRET) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/student?error=missing_config`);
+    return NextResponse.redirect(`${baseUrl}/student?error=missing_config`);
   }
 
   try {
@@ -49,7 +51,7 @@ export async function GET(request: Request) {
 
     if (!tokenResponse.ok) {
       console.error('LinkedIn token exchange failed:', tokenData);
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/student?error=token_exchange_failed`);
+      return NextResponse.redirect(`${baseUrl}/student?error=token_exchange_failed`);
     }
 
     // Get user profile to verify token and get member URN
@@ -63,7 +65,7 @@ export async function GET(request: Request) {
 
     if (!profileResponse.ok) {
       console.error('LinkedIn profile fetch failed:', profileData);
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/student?error=profile_fetch_failed`);
+      return NextResponse.redirect(`${baseUrl}/student?error=profile_fetch_failed`);
     }
 
     // Create HTML response that stores tokens and closes popup
@@ -94,6 +96,6 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('LinkedIn OAuth error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/student?error=oauth_error`);
+    return NextResponse.redirect(`${baseUrl}/student?error=oauth_error`);
   }
 }
