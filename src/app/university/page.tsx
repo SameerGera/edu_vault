@@ -123,12 +123,12 @@ export default function UniversityDashboard() {
         {/* HEADER */}
         <header className="glass flex flex-col md:flex-row justify-between items-center p-8 rounded-[2.5rem]">
           <div className="flex items-center gap-5">
-            <div className="bg-indigo-600/20 border border-indigo-500/30 p-4 rounded-2xl text-indigo-400">
+            <div className="bg-amber-500/20 border border-amber-500/30 p-4 rounded-2xl text-amber-600">
               <Landmark size={32} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-1">Authorized Issuer Node</p>
-              <h1 className="text-3xl font-black text-white tracking-tight">{univ}</h1>
+              <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.3em] mb-1">Authorized Issuer Node</p>
+              <h1 className="text-3xl font-black text-gray-800 tracking-tight">{univ}</h1>
             </div>
           </div>
           <Button 
@@ -142,17 +142,17 @@ export default function UniversityDashboard() {
 
         <Tabs defaultValue="manual" className="space-y-6">
           <TabsList className="glass inline-flex h-16 items-center justify-center rounded-2xl p-1.5">
-            <TabsTrigger value="manual" className="rounded-xl px-10 py-3 text-sm font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all">
+            <TabsTrigger value="manual" className="rounded-xl px-10 py-3 text-sm font-bold data-[state=active]:bg-amber-500 data-[state=active]:text-white transition-all duration-300">
               <UserPlus className="mr-2 h-4 w-4" /> Single Certificate
             </TabsTrigger>
-            <TabsTrigger value="excel" className="rounded-xl px-10 py-3 text-sm font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all">
+            <TabsTrigger value="excel" className="rounded-xl px-10 py-3 text-sm font-bold data-[state=active]:bg-amber-500 data-[state=active]:text-white transition-all duration-300">
               <Database className="mr-2 h-4 w-4" /> Bulk Ledger Upload
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="manual">
             <div className="glass p-10 rounded-[3rem] space-y-8">
-              <div className="flex items-center gap-3 text-indigo-400 mb-2">
+              <div className="flex items-center gap-3 text-amber-600 mb-2">
                 <Fingerprint size={20} />
                 <span className="text-xs font-bold uppercase tracking-widest">Metadata Registration</span>
               </div>
@@ -168,7 +168,7 @@ export default function UniversityDashboard() {
               <Button 
                 onClick={mintManual} 
                 disabled={loading} 
-                className="w-full h-16 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-lg shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98]"
+                className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-lg shadow-lg shadow-amber-500/20 transition-all duration-300 active:scale-[0.98]"
               >
                 {loading ? <Loader2 className="animate-spin" /> : <><Sparkles className="mr-2 h-5 w-5" /> Execute Blockchain Mint</>}
               </Button>
@@ -177,13 +177,13 @@ export default function UniversityDashboard() {
 
           <TabsContent value="excel">
             <div className="glass p-12 rounded-[3rem]">
-               <div className="border-2 border-dashed border-white/10 rounded-[2.5rem] p-20 flex flex-col items-center justify-center hover:border-indigo-500/50 hover:bg-white/5 transition-all group relative">
+               <div className="border-2 border-dashed border-amber-200 rounded-[2.5rem] p-20 flex flex-col items-center justify-center hover:border-amber-500/50 hover:bg-amber-50/50 transition-all duration-300 group relative">
                   <input type="file" accept=".xlsx, .xls" onChange={handleExcel} className="absolute inset-0 opacity-0 cursor-pointer" />
-                  <div className="bg-white/5 p-6 rounded-3xl mb-6 border border-white/10 group-hover:scale-110 transition-transform shadow-2xl">
-                    <FileUp className="h-12 w-12 text-indigo-400" />
+                  <div className="bg-amber-50 p-6 rounded-3xl mb-6 border border-amber-200 group-hover:scale-110 transition-transform duration-300 shadow-2xl">
+                    <FileUp className="h-12 w-12 text-amber-600" />
                   </div>
-                  <h3 className="text-2xl font-black text-white tracking-tight">Drop Ledger Registry</h3>
-                  <p className="text-slate-400 font-medium mt-2">XLSX • Columns: Name, AdmissionNo, Year, Degree, Email</p>
+                  <h3 className="text-2xl font-black text-gray-800 tracking-tight">Drop Ledger Registry</h3>
+                  <p className="text-amber-700 font-medium mt-2">XLSX • Columns: Name, AdmissionNo, Year, Degree, Email</p>
                 </div>
             </div>
           </TabsContent>
@@ -201,7 +201,7 @@ function InputField({ label, value, placeholder, onChange }: any) {
         value={value} 
         placeholder={placeholder} 
         onChange={onChange} 
-        className="h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-indigo-500 transition-all font-medium" 
+        className="h-14 rounded-2xl bg-white/5 border-white/10 text-gray-800 placeholder:text-amber-400 focus:border-amber-500 transition-all duration-300 font-medium" 
       />
     </div>
   );

@@ -57,24 +57,24 @@ export default function UniversityAuth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0F172A] p-6 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-[#fef7f0]">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-200/20 rounded-full blur-[120px]"></div>
       
-      <Card className="w-full max-w-md bg-slate-900/50 border-slate-800 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden">
+      <Card className="w-full max-w-md bg-white/90 border-amber-200 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden">
         <CardHeader className="pt-10 pb-2 text-center">
-          <div className="bg-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/20">
+          <div className="bg-amber-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20">
             <ShieldCheck className="text-white h-8 w-8" />
           </div>
-          <CardTitle className="text-3xl font-black text-white tracking-tight">EduVault <span className="text-indigo-400">Auth</span></CardTitle>
-          <p className="text-slate-400 text-xs mt-2 font-bold uppercase tracking-[0.2em]">Institutional Gateway</p>
+          <CardTitle className="text-3xl font-black text-gray-800 tracking-tight">EduVault <span className="text-amber-500">Auth</span></CardTitle>
+          <p className="text-amber-700 text-xs mt-2 font-bold uppercase tracking-[0.2em]">Institutional Gateway</p>
         </CardHeader>
 
         <CardContent className="p-8">
           {/* onValueChange clears data when switching tabs */}
           <Tabs defaultValue="login" onValueChange={clearInputs} className="space-y-8">
-            <TabsList className="grid w-full grid-cols-2 bg-slate-950/50 p-1 rounded-xl h-12 border border-slate-800">
-              <TabsTrigger value="login" className="rounded-lg font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Login</TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-amber-50/50 p-1 rounded-xl h-12 border border-amber-200">
+              <TabsTrigger value="login" className="rounded-lg font-bold data-[state=active]:bg-amber-500 data-[state=active]:text-white transition-all duration-300">Login</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-lg font-bold data-[state=active]:bg-amber-500 data-[state=active]:text-white transition-all duration-300">Sign Up</TabsTrigger>
             </TabsList>
 
             <div className="space-y-4">
@@ -82,17 +82,17 @@ export default function UniversityAuth() {
                 <Landmark className="absolute left-4 top-4 h-5 w-5 text-slate-500" />
                 <Input 
                   placeholder="University Name" 
-                  className="pl-12 h-14 bg-slate-950/50 border-slate-800 text-white rounded-2xl focus:border-indigo-500" 
+                  className="pl-12 h-14 bg-amber-50/50 border-amber-200 text-gray-800 rounded-2xl focus:border-amber-500 transition-all duration-300" 
                   value={name} // Two-way binding
                   onChange={(e) => setName(e.target.value)} 
                 />
               </div>
               <div className="relative">
-                <Lock className="absolute left-4 top-4 h-5 w-5 text-slate-500" />
+                <Lock className="absolute left-4 top-4 h-5 w-5 text-amber-600" />
                 <Input 
                   type="password" 
                   placeholder="Access Password" 
-                  className="pl-12 h-14 bg-slate-950/50 border-slate-800 text-white rounded-2xl focus:border-indigo-500" 
+                  className="pl-12 h-14 bg-amber-50/50 border-amber-200 text-gray-800 rounded-2xl focus:border-amber-500 transition-all duration-300" 
                   value={pass} // Two-way binding
                   onChange={(e) => setPass(e.target.value)} 
                 />
@@ -100,13 +100,13 @@ export default function UniversityAuth() {
             </div>
 
             <TabsContent value="login" className="m-0">
-              <Button onClick={handleLogin} disabled={loading} className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-lg transition-all active:scale-95">
+              <Button onClick={handleLogin} disabled={loading} className="w-full h-14 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-lg transition-all duration-300 active:scale-95 shadow-lg shadow-amber-500/20">
                 {loading ? <Loader2 className="animate-spin" /> : "Authorize & Enter"}
               </Button>
             </TabsContent>
 
             <TabsContent value="signup" className="m-0">
-              <Button onClick={handleSignup} disabled={loading} className="w-full h-14 bg-slate-100 hover:bg-white text-slate-950 rounded-2xl font-black text-lg transition-all active:scale-95">
+              <Button onClick={handleSignup} disabled={loading} className="w-full h-14 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-black text-lg transition-all duration-300 active:scale-95">
                 {loading ? <Loader2 className="animate-spin" /> : "Create Institution Node"}
               </Button>
             </TabsContent>
