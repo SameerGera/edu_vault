@@ -7,10 +7,25 @@ import { Input } from "@/components/ui/input";
 // FIXED: All required icons imported
 import { ShieldCheck, Copy, Check, Loader2, Award, Zap, Landmark } from "lucide-react";
 
+interface Certificate {
+  student_name: string;
+  university_name: string;
+  roll_no: string;
+  degree_name: string;
+  year_of_passing: string;
+  hash: string;
+}
+
+interface CertFieldProps {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+}
+
 export default function StudentVault() {
   const [admission, setAdmission] = useState("");
   const [univSearch, setUnivSearch] = useState("");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -26,6 +41,7 @@ export default function StudentVault() {
   };
 
   const handleCopy = () => {
+    if (!data) return;
     navigator.clipboard.writeText(data.hash);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -47,7 +63,7 @@ export default function StudentVault() {
       {data && (
         <div className="certificate-warm p-1 relative max-w-2xl w-full rounded-[3rem] shadow-2xl overflow-hidden">
           <div className="bg-[#fef7f0]/90 backdrop-blur-3xl rounded-[2.9rem] p-10 space-y-12 relative overflow-hidden border border-amber-200/50">
-            <ShieldCheck size={200} className="absolute -right-10 -bottom-10 text-white/5 rotate-12" />
+            <ShieldCheck size={200} className="absolute -right-10 -bottom-10 text-black/5 rotate-12" />
             
             <div className="flex justify-between items-start relative z-10">
               <div className="space-y-4">
@@ -55,7 +71,7 @@ export default function StudentVault() {
                   <Zap size={12} className="text-amber-600" />
                   <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest italic">Blockchain Verified</span>
                 </div>
-                <h3 className="text-6xl font-black leading-none text-white tracking-tighter">{data.student_name}</h3>
+                <h3 className="text-6xl font-black leading-none text-black tracking-tighter">{data.student_name}</h3>
               </div>
               <div className="bg-white p-2 rounded-2xl shadow-2xl border-4 border-white/10">
                 <QRCodeSVG value={`${window.location.origin}/employer?hash=${data.hash}`} size={90} />
@@ -76,7 +92,7 @@ export default function StudentVault() {
               </div>
               <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl flex items-center justify-between">
                 <code className="text-[10px] text-amber-800 font-mono truncate mr-4">{data.hash}</code>
-                <button onClick={handleCopy} className={`p-2.5 rounded-xl transition-all duration-300 ${copied ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white'}`}>
+                <button onClick={handleCopy} className={`p-2.5 rounded-xl transition-all duration-300 ${copied ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-black'}`}>
                   {copied ? <Check size={18} /> : <Copy size={18} />}
                 </button>
               </div>
@@ -88,14 +104,14 @@ export default function StudentVault() {
   );
 }
 
-function CertField({ label, value, icon }: any) {
+function CertField({ label, value, icon }: CertFieldProps) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5 text-slate-500">
         {icon}
         <p className="text-[9px] font-black uppercase tracking-widest">{label}</p>
       </div>
-      <p className="text-2xl font-black text-white italic tracking-tight leading-none">{value}</p>
+      <p className="text-2xl font-black text-black italic tracking-tight leading-none">{value}</p>
     </div>
   );
 }
