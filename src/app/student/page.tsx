@@ -47,6 +47,68 @@ interface ErrorState {
   type: 'error' | 'warning' | 'info';
 }
 
+async function fetchCertificateRecord(universityName: string, admissionNo: string): Promise<Certificate | null> {
+  const { supabase } = await import('@/lib/supabase');
+
+  const { data: result, error } = await supabase
+    .from('certificates')
+    .select('*')
+    .eq('university_name', universityName)
+    .eq('roll_no', admissionNo)
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return result;
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      return;
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  }
+}
+
+function getStoredLinkedInToken(): string | undefined {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.LINKEDIN_TOKEN) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function buildIntegrationMessage(details: any, fallback: string): string {
+  const linkedinSuccess = details?.linkedin === 'success';
+  const hrmsSuccess = details?.hrms === 'success';
+
+  if (linkedinSuccess && hrmsSuccess) {
+    return 'Successfully shared to LinkedIn and HRMS.';
+  }
+
+  if (linkedinSuccess) {
+    return 'Successfully shared to LinkedIn. HRMS integration not configured.';
+  }
+
+  if (hrmsSuccess) {
+    return 'Successfully shared to HRMS. LinkedIn integration not configured.';
+  }
+
+  return fallback;
+}
+
 export default function StudentVault() {
   // Form state
   const [admission, setAdmission] = useState<string>("");
@@ -91,7 +153,6 @@ export default function StudentVault() {
 
   // Fetch certificate record from database
   const fetchRecord = useCallback(async (): Promise<void> => {
-    // Input validation
     if (!admission.trim() || !univSearch.trim()) {
       setError({ message: MESSAGES.FILL_FIELDS, type: 'warning' });
       return;
@@ -102,19 +163,7 @@ export default function StudentVault() {
     setData(null);
 
     try {
-      // Dynamic import to avoid build-time evaluation
-      const { supabase } = await import('@/lib/supabase');
-
-      const { data: result, error: dbError } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('university_name', univSearch.trim())
-        .eq('roll_no', admission.trim())
-        .single();
-
-      if (dbError) {
-        throw new Error(dbError.message);
-      }
+      const result = await fetchCertificateRecord(univSearch.trim(), admission.trim());
 
       if (result) {
         setData(result);
@@ -125,7 +174,7 @@ export default function StudentVault() {
       console.error('Database query failed:', err);
       setError({
         message: err instanceof Error ? err.message : 'An unexpected error occurred',
-        type: 'error'
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -137,26 +186,12 @@ export default function StudentVault() {
     if (!data?.hash) return;
 
     try {
-      await navigator.clipboard.writeText(data.hash);
+      await copyTextToClipboard(data.hash);
       setCopied(true);
       setTimeout(() => setCopied(false), TIMEOUTS.COPY_FEEDBACK);
     } catch (err) {
       console.error('Clipboard write failed:', err);
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = data.hash;
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        setCopied(true);
-        setTimeout(() => setCopied(false), TIMEOUTS.COPY_FEEDBACK);
-      } catch (fallbackErr) {
-        console.error('Fallback copy failed:', fallbackErr);
-        setError({ message: 'Failed to copy to clipboard', type: 'error' });
-      } finally {
-        document.body.removeChild(textArea);
-      }
+      setError({ message: 'Failed to copy to clipboard', type: 'error' });
     }
   }, [data?.hash]);
 
@@ -260,20 +295,7 @@ export default function StudentVault() {
       }
 
       const result = await response.json();
-
-      // Determine success message based on results
-      const linkedinSuccess = result.details?.linkedin === 'success';
-      const hrmsSuccess = result.details?.hrms === 'success';
-
-      if (linkedinSuccess && hrmsSuccess) {
-        setIntegrationMessage('Successfully shared to LinkedIn and HRMS.');
-      } else if (linkedinSuccess) {
-        setIntegrationMessage('Successfully shared to LinkedIn. HRMS integration not configured.');
-      } else if (hrmsSuccess) {
-        setIntegrationMessage('Successfully shared to HRMS. LinkedIn integration not configured.');
-      } else {
-        setIntegrationMessage(result.message || 'Integration completed with partial results.');
-      }
+      setIntegrationMessage(buildIntegrationMessage(result.details, result.message || 'Integration completed with partial results.'));
     } catch (err) {
       console.error('Profile integration failed:', err);
       const errorMessage = err instanceof Error ? err.message : MESSAGES.INTEGRATION_FAILED;
