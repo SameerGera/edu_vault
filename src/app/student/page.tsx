@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,23 @@ export default function StudentVault() {
   const [data, setData] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [integrationLoading, setIntegrationLoading] = useState(false);
+  const [integrationMessage, setIntegrationMessage] = useState<string | null>(null);
+  const [linkedinConnected, setLinkedinConnected] = useState(false);
+  const [linkedinLoading, setLinkedinLoading] = useState(false);
+
+  useEffect(() => {
+    // Check if LinkedIn is already connected
+    const token = localStorage.getItem('linkedin_access_token');
+    const expiry = localStorage.getItem('linkedin_token_expiry');
+    if (token && expiry && Date.now() < parseInt(expiry)) {
+      setLinkedinConnected(true);
+    } else if (token) {
+      // Token expired, remove it
+      localStorage.removeItem('linkedin_access_token');
+      localStorage.removeItem('linkedin_token_expiry');
+    }
+  }, []);
 
   const fetchRecord = async () => {
     if (!admission || !univSearch) return alert("Fill both fields.");
@@ -45,6 +62,91 @@ export default function StudentVault() {
     navigator.clipboard.writeText(data.hash);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleLinkedInConnect = async () => {
+    setLinkedinLoading(true);
+    try {
+      // Open LinkedIn OAuth popup
+      const width = 600;
+      const height = 600;
+      const left = window.innerWidth / 2 - width / 2;
+      const top = window.innerHeight / 2 - height / 2;
+
+      const popup = window.open(
+        '/api/linkedin/auth',
+        'linkedin-auth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      // Listen for auth completion
+      const checkClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkClosed);
+          // Check if auth was successful
+          const token = localStorage.getItem('linkedin_access_token');
+          if (token) {
+            setLinkedinConnected(true);
+          }
+          setLinkedinLoading(false);
+        }
+      }, 1000);
+
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        if (!popup?.closed) {
+          popup?.close();
+          setLinkedinLoading(false);
+          alert('LinkedIn connection timed out. Please try again.');
+        }
+      }, 300000);
+
+    } catch (error) {
+      console.error('LinkedIn connection error:', error);
+      setLinkedinLoading(false);
+      alert('Failed to connect to LinkedIn. Please try again.');
+    }
+  };
+
+  const handleProfileIntegration = async () => {
+    if (!data) return;
+    setIntegrationLoading(true);
+    setIntegrationMessage(null);
+
+    try {
+      const recordUrl = `${window.location.origin}/employer?hash=${data.hash}`;
+      const linkedinToken = localStorage.getItem('linkedin_access_token');
+
+      const response = await fetch('/api/profile-integration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hash: data.hash,
+          studentName: data.student_name,
+          universityName: data.university_name,
+          degreeName: data.degree_name,
+          recordUrl,
+          linkedinToken, // Pass the stored token
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Integration failed');
+
+      if (result.details?.linkedin === 'success' && result.details?.hrms === 'success') {
+        setIntegrationMessage('LinkedIn and HRMS update sent successfully.');
+      } else if (result.details?.linkedin === 'success') {
+        setIntegrationMessage('LinkedIn update sent successfully. HRMS integration is not configured.');
+      } else if (result.details?.hrms === 'success') {
+        setIntegrationMessage('HRMS update sent successfully. LinkedIn integration is not configured.');
+      } else {
+        setIntegrationMessage(result.message || 'Integration completed with partial results.');
+      }
+    } catch (error: any) {
+      setIntegrationMessage(error?.message || 'Integration failed.');
+    }
+
+    setIntegrationLoading(false);
   };
 
   return (
@@ -96,6 +198,25 @@ export default function StudentVault() {
                   {copied ? <Check size={18} /> : <Copy size={18} />}
                 </button>
               </div>
+            </div>
+
+            <div className="space-y-4 relative z-10">
+              {!linkedinConnected ? (
+                <Button onClick={handleLinkedInConnect} disabled={linkedinLoading} className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg transition-all duration-300 shadow-lg shadow-blue-500/20 active:scale-95">
+                  {linkedinLoading ? <Loader2 className="animate-spin" /> : "Connect LinkedIn"}
+                </Button>
+              ) : (
+                <div className="flex items-center justify-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-2xl">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-bold text-blue-800">LinkedIn Connected</span>
+                </div>
+              )}
+              <Button onClick={handleProfileIntegration} disabled={integrationLoading || !linkedinConnected} className="w-full h-14 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-lg transition-all duration-300 shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50">
+                {integrationLoading ? <Loader2 className="animate-spin" /> : "Add to Profile"}
+              </Button>
+              {integrationMessage && (
+                <p className="text-sm text-gray-700 font-medium">{integrationMessage}</p>
+              )}
             </div>
           </div>
         </div>
