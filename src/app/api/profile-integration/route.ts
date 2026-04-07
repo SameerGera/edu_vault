@@ -21,47 +21,52 @@ async function sendLinkedInPost(payload: {
   if (!memberUrn) {
     // Fallback: try to get it from profile API
     try {
-      const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
+      const profileResponse = await fetch('https://api.linkedin.com/v2/people/~:(id)', {
         headers: {
           Authorization: `Bearer ${payload.linkedinToken}`,
         },
       });
       const profileData = await profileResponse.json();
-      memberUrn = profileData.sub;
+      memberUrn = profileData.id;
     } catch (error) {
       return { status: 'error', error: 'Could not get LinkedIn member ID' };
     }
   }
 
   const body = {
-    content: {
-      contentEntities: [
-        {
-          entityLocation: payload.recordUrl,
-          thumbnails: [
-            {
-              resolvedUrl: payload.recordUrl,
-            },
-          ],
+    author: `urn:li:person:${memberUrn}`,
+    lifecycleState: 'PUBLISHED',
+    specificContent: {
+      'com.linkedin.ugc.ShareContent': {
+        shareCommentary: {
+          text: `EduVault has verified my ${payload.degreeName} from ${payload.universityName}. View my credential: ${payload.recordUrl}`,
         },
-      ],
-      title: 'EduVault Credential',
-      description: `EduVault has verified my ${payload.degreeName} from ${payload.universityName}. View my credential: ${payload.recordUrl}`,
+        shareMediaCategory: 'ARTICLE',
+        media: [
+          {
+            status: 'READY',
+            description: {
+              text: `EduVault blockchain credential for ${payload.studentName}`,
+            },
+            originalUrl: payload.recordUrl,
+            title: {
+              text: 'EduVault Credential',
+            },
+          },
+        ],
+      },
     },
-    distribution: {
-      linkedInDistributionTarget: {},
-    },
-    owner: `urn:li:person:${memberUrn}`,
-    text: {
-      text: `EduVault has verified my ${payload.degreeName} from ${payload.universityName}. View my credential: ${payload.recordUrl}`,
+    visibility: {
+      "com.linkedin.ugc.MemberNetworkVisibility": "CONNECTIONS",
     },
   };
 
-  const response = await fetch('https://api.linkedin.com/v2/shares', {
+  const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${payload.linkedinToken}`,
       'Content-Type': 'application/json',
+      'X-Restli-Protocol-Version': '2.0.0',
     },
     body: JSON.stringify(body),
   });

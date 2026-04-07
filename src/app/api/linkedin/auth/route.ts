@@ -14,7 +14,14 @@ export async function GET(request: Request) {
     : requestOrigin;
   const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || `${baseUrl}/api/linkedin/callback`;
 
-  console.log('LinkedIn auth redirect URI:', LINKEDIN_REDIRECT_URI);
+  console.log('=== LinkedIn Auth Debug ===');
+  console.log('Request origin:', requestOrigin);
+  console.log('NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
+  console.log('LINKEDIN_REDIRECT_URI env:', process.env.LINKEDIN_REDIRECT_URI);
+  console.log('Computed baseUrl:', baseUrl);
+  console.log('Final LINKEDIN_REDIRECT_URI:', LINKEDIN_REDIRECT_URI);
+  console.log('LINKEDIN_CLIENT_ID:', LINKEDIN_CLIENT_ID ? LINKEDIN_CLIENT_ID.substring(0, 10) + '...' : 'NOT SET');
+  console.log('==========================');
 
   // Rate limiting for OAuth initiation
   const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
@@ -31,7 +38,9 @@ export async function GET(request: Request) {
     return createSecureResponse({ error: 'LinkedIn OAuth not configured' }, 500);
   }
 
-  const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(LINKEDIN_REDIRECT_URI)}&scope=openid%20profile%20email`;
+  const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(LINKEDIN_REDIRECT_URI)}&scope=r_liteprofile%20r_emailaddress%20w_member_social`;
+
+  console.log('Final auth URL:', authUrl);
 
   return NextResponse.redirect(authUrl);
 }
