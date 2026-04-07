@@ -25,4 +25,13 @@
 3.  **Notify**: Student receives their unique hash via email.
 4.  **Verify**: Employer scans the QR code from the Student Vault card to verify the record against the live ledger.
 
+## vercel link
+https://edu-vault-ecru.vercel.app
+
+## 👥 Team Members
+
+- Divya Jalan  
+- Siya Jhulka  
+- Sameer Gera  
+- Lakshya Jain  
 
