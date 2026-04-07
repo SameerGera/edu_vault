@@ -122,6 +122,7 @@ export default function StudentVault() {
   const [copied, setCopied] = useState<boolean>(false);
   const [integrationLoading, setIntegrationLoading] = useState<boolean>(false);
   const [integrationMessage, setIntegrationMessage] = useState<string | null>(null);
+  const [profileAdded, setProfileAdded] = useState<boolean>(false);
   const [linkedinConnected, setLinkedinConnected] = useState<boolean>(false);
   const [linkedinLoading, setLinkedinLoading] = useState<boolean>(false);
 
@@ -169,6 +170,7 @@ export default function StudentVault() {
         setData(result);
       } else {
         setError({ message: MESSAGES.RECORD_NOT_FOUND, type: 'info' });
+        setData(null);
       }
     } catch (err) {
       console.error('Database query failed:', err);
@@ -176,7 +178,10 @@ export default function StudentVault() {
         message: err instanceof Error ? err.message : 'An unexpected error occurred',
         type: 'error',
       });
+      setData(null);
     } finally {
+      setIntegrationMessage(null);
+      setProfileAdded(false);
       setLoading(false);
     }
   }, [admission, univSearch]);
@@ -299,6 +304,10 @@ export default function StudentVault() {
 
       const result = await response.json();
       setIntegrationMessage(buildIntegrationMessage(result.details, result.message || 'Integration completed with partial results.'));
+
+      if (result?.details?.linkedin === 'success') {
+        setProfileAdded(true);
+      }
     } catch (err) {
       console.error('Profile integration failed:', err);
       const errorMessage = err instanceof Error ? err.message : MESSAGES.INTEGRATION_FAILED;
@@ -467,7 +476,7 @@ export default function StudentVault() {
 
               <Button
                 onClick={handleProfileIntegration}
-                disabled={integrationLoading || !linkedinConnected}
+                disabled={integrationLoading || !linkedinConnected || profileAdded}
                 className="w-full h-14 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-lg transition-all duration-300 shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-describedby={integrationLoading ? "integration-loading" : !linkedinConnected ? "linkedin-required" : undefined}
               >
@@ -476,6 +485,8 @@ export default function StudentVault() {
                     <Loader2 className="animate-spin mr-2" aria-hidden="true" />
                     <span id="integration-loading">Sharing to profile...</span>
                   </>
+                ) : profileAdded ? (
+                  "Added to Profile"
                 ) : (
                   "Add to Profile"
                 )}

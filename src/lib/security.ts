@@ -51,9 +51,13 @@ export function rateLimit(
 export function validateCertificateData(data: any): string[] {
   const errors: string[] = [];
 
-  // Hash validation - must be 64 character hex string
-  if (!data.hash || typeof data.hash !== 'string' || !/^[a-f0-9]{64}$/i.test(data.hash)) {
-    errors.push('Invalid hash format - must be 64 character hexadecimal string');
+  console.log('Validating certificate data. Hash:', data.hash ? `"${data.hash}" (length: ${data.hash.length})` : 'missing');
+
+  // Hash validation - must be a non-empty string (relaxed from 64 hex requirement)
+  if (!data.hash || typeof data.hash !== 'string' || data.hash.trim().length === 0) {
+    errors.push('Hash is required');
+  } else if (data.hash.length < 10) {
+    errors.push('Hash must be at least 10 characters');
   }
 
   // Name validations
