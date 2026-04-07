@@ -13,13 +13,21 @@ async function sendLinkedInPost(payload: {
   linkedinToken?: string;
   linkedinMemberId?: string;
 }) {
+  console.log('=== LinkedIn Post Start ===');
+  console.log('Has token:', !!payload.linkedinToken);
+  console.log('Has member ID:', !!payload.linkedinMemberId);
+
   if (!payload.linkedinToken) {
+    console.log('Skipping: No token');
     return { status: 'skipped', reason: 'No LinkedIn token provided' };
   }
 
   // Get member URN - either from payload or fetch it
   let memberUrn = payload.linkedinMemberId;
+  console.log('Initial member URN:', memberUrn);
+
   if (!memberUrn) {
+    console.log('Fetching member ID from LinkedIn...');
     // Fallback: fetch from LinkedIn profile API
     try {
       const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
@@ -27,17 +35,22 @@ async function sendLinkedInPost(payload: {
           Authorization: `Bearer ${payload.linkedinToken}`,
         },
       });
+      console.log('Profile fetch status:', profileResponse.status);
       const profileData = await profileResponse.json();
+      console.log('Profile data:', profileData);
       memberUrn = profileData.sub;
     } catch (error) {
       console.error('Failed to fetch LinkedIn member ID:', error);
-      return { status: 'error', error: 'Could not get LinkedIn member ID' };
+      return { status: 'error', error: `Could not get LinkedIn member ID: ${error}` };
     }
   }
 
   if (!memberUrn) {
+    console.error('Member URN is null after fetching');
     return { status: 'error', error: 'LinkedIn member ID is missing' };
   }
+
+  console.log('Final member URN:', memberUrn);
 
   const body = {
     author: `urn:li:person:${memberUrn}`,
@@ -67,25 +80,35 @@ async function sendLinkedInPost(payload: {
     },
   };
 
-  const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${payload.linkedinToken}`,
-      'Content-Type': 'application/json',
-      'X-Restli-Protocol-Version': '2.0.0',
-    },
-    body: JSON.stringify(body),
-  });
+  console.log('Sending request to LinkedIn UGC Posts API...');
+  console.log('Body preview:', JSON.stringify(body).substring(0, 200));
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('LinkedIn UGC Post API error:', response.status, errorText);
-    return { status: 'error', error: `LinkedIn API (${response.status}): ${errorText}` };
+  try {
+    const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${payload.linkedinToken}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify(body),
+    });
+
+    console.log('LinkedIn API response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('LinkedIn UGC Post API error:', response.status, errorText);
+      return { status: 'error', error: `LinkedIn API (${response.status}): ${errorText}` };
+    }
+
+    const postResult = await response.json();
+    console.log('LinkedIn UGC post successful:', postResult);
+    return { status: 'success' };
+  } catch (error) {
+    console.error('Exception during LinkedIn post:', error);
+    return { status: 'error', error: `Exception: ${error}` };
   }
-
-  const postResult = await response.json();
-  console.log('LinkedIn UGC post successful:', postResult);
-  return { status: 'success' };
 }
 
 async function sendHrmsUpdate(payload: {
@@ -123,10 +146,13 @@ async function sendHrmsUpdate(payload: {
 }
 
 export async function POST(req: Request) {
+  console.log('=== Integration Route Start ===');
   try {
     // Rate limiting
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     const rateLimitResult = rateLimit(`integration:${clientIP}`, 5, 60000); // 5 requests per minute
+
+    console.log('Rate limit check:', rateLimitResult.limited ? 'LIMITED' : 'OK');
 
     if (rateLimitResult.limited) {
       return createSecureResponse(
@@ -135,7 +161,15 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log('Parsing request body...');
     const { hash, studentName, universityName, degreeName, recordUrl, linkedinToken, linkedinMemberId } = await req.json();
+
+    console.log('Received data:', {
+      hash: hash ? 'present' : 'missing',
+      studentName: studentName ? 'present' : 'missing',
+      linkedinToken: linkedinToken ? 'present' : 'missing',
+      linkedinMemberId: linkedinMemberId ? 'present' : 'missing',
+    });
 
     // Validate input data
     const validationErrors = validateCertificateData({
@@ -146,6 +180,8 @@ export async function POST(req: Request) {
       recordUrl
     });
 
+    console.log('Validation errors:', validationErrors.length > 0 ? validationErrors : 'none');
+
     if (validationErrors.length > 0) {
       return createSecureResponse(
         { error: 'Invalid input data', details: validationErrors },
@@ -155,6 +191,7 @@ export async function POST(req: Request) {
 
     // Validate LinkedIn token if provided
     if (linkedinToken && !validateLinkedInToken(linkedinToken)) {
+      console.error('Invalid LinkedIn token format');
       return createSecureResponse(
         { error: 'Invalid LinkedIn token format' },
         400
@@ -172,10 +209,15 @@ export async function POST(req: Request) {
       linkedinMemberId: linkedinMemberId ? sanitizeInput(linkedinMemberId) : undefined,
     };
 
+    console.log('Starting LinkedIn post...');
     const linkedInResult = await sendLinkedInPost(sanitizedData);
-    const hrmsResult = await sendHrmsUpdate(sanitizedData);
+    console.log('LinkedIn result:', linkedInResult);
 
-    return createSecureResponse({
+    console.log('Starting HRMS update...');
+    const hrmsResult = await sendHrmsUpdate(sanitizedData);
+    console.log('HRMS result:', hrmsResult);
+
+    const responseData = {
       success: true,
       details: {
         linkedin: linkedInResult.status,
@@ -185,9 +227,15 @@ export async function POST(req: Request) {
         linkedinError: linkedInResult.error,
         hrmsError: hrmsResult.error,
       },
-    });
+    };
+
+    console.log('=== Integration Route Success ===');
+    return createSecureResponse(responseData);
   } catch (error: any) {
-    console.error('Integration error:', error);
+    console.error('=== Integration Route Error ===');
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack);
     return createSecureResponse(
       { error: error?.message || 'Integration route failed.' },
       500
